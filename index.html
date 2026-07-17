@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HP 33120A Remote Control</title>
+    <!-- Zuverlässiger Tailwind v3 CDN mit expliziter Dark Mode Konfiguration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Erzwingt Steuerung rein über das Vorhandensein der Klasse 'dark'
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen p-6 transition-colors duration-200">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center border-b border-slate-200 dark:border-gray-700 pb-4 gap-4">
+            <h1 class="text-2xl font-bold tracking-wide text-emerald-600 dark:text-emerald-400">HP 33120A Controller</h1>
+            <div class="flex items-center gap-3">
+                <!-- Theme Umschalter -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+                    ☀️ Light Mode
+                </button>
+                <div id="statusBadge" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30">
+                    Getrennt
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Spalte 1: RS-232 Einstellungen -->
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 space-y-4 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Schnittstelle</h2>
+
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-slate-500 dark:text-gray-400 mb-1">Baudrate</label>
+                        <select id="baudRate" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+                            <option value="300">300</option>
+                            <option value="1200">1200</option>
+                            <option value="2400">2400</option>
+                            <option value="4800">4800</option>
+                            <option value="9600" selected>9600 (Standard)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-500 dark:text-gray-400 mb-1">Parität</label>
+                        <select id="parity" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+                            <option value="none" selected>None (8N1/8N2)</option>
+                            <option value="even">Even (7E1/7E2)</option>
+                            <option value="odd">Odd (7O1/7O2)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-500 dark:text-gray-400 mb-1">Datenbits</label>
+                        <select id="dataBits" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+                            <option value="8" selected>8</option>
+                            <option value="7">7</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-500 dark:text-gray-400 mb-1">Stopbits</label>
+                        <select id="stopBits" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+                            <option value="1">1</option>
+                            <option value="2" selected>2 (HP Default)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-500 dark:text-gray-400 mb-1">Flusssteuerung</label>
+                        <select id="flowControl" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+                            <option value="none">Keine</option>
+                            <option value="hardware" selected>Hardware (DTR/DSR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="btnConnect" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors shadow-lg shadow-emerald-900/10 dark:shadow-emerald-900/20 cursor-pointer">
+                    Verbindung herstellen
+                </button>
+            </div>
+
+            <!-- Spalte 2 & 3: Generator Steuerung -->
+            <div class="md:col-span-2 space-y-6">
+
+                <!-- Signalform (Waveform) -->
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
+                    <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300 mb-3">Signalform (Waveform)</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <button data-type="SIN" onclick="setWaveform('SIN')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Sinus</button>
+                        <button data-type="SQU" onclick="setWaveform('SQU')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rechteck</button>
+                        <button data-type="TRI" onclick="setWaveform('TRI')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Dreieck</button>
+                        <button data-type="RAMP" onclick="setWaveform('RAMP')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rampe</button>
+                        <button data-type="NOIS" onclick="setWaveform('NOIS')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rauschen</button>
+                        <button data-type="DC" onclick="setWaveform('DC')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center text-orange-600 dark:text-orange-400 font-bold cursor-pointer">DC Offset Mode</button>
+                    </div>
+                </div>
+
+                <!-- Voreinstellungen (Presets) -->
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
+                    <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300 mb-3">Voreinstellungen (Presets)</h2>
+                    <div class="space-y-2">
+                        <script>
+                            for (let i = 1; i <= 5; i++) {
+                                document.write(`
+                                    <div class="flex gap-2 items-center bg-slate-50 dark:bg-gray-900/40 p-1.5 rounded border border-slate-200 dark:border-gray-700/60">
+                                        <button id="btnLoadPreset_${i}" onclick="applyPreset(${i})" class="flex-1 text-left px-3 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-emerald-600/10 dark:hover:bg-emerald-600/20 text-slate-800 dark:text-gray-200 hover:text-emerald-600 dark:hover:text-emerald-400 rounded font-medium transition-all flex justify-between items-center group cursor-pointer">
+                                            <span class="font-bold text-slate-400 dark:text-gray-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">P${i}</span>
+                                            <span id="presetLabel_${i}" class="text-sm font-mono text-slate-600 dark:text-gray-300">Nicht belegt</span>
+                                        </button>
+                                        <button onclick="savePreset(${i})" class="bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 text-xs text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white px-3 py-2.5 rounded border border-slate-300 dark:border-gray-700 transition-colors font-semibold uppercase tracking-wider cursor-pointer">
+                                            Speichern
+                                        </button>
+                                    </div>
+                                `);
+                            }
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Frequenz, Amplitude & DC Offset -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                    <!-- Frequenz Block -->
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <h2 class="text-md font-semibold text-slate-700 dark:text-gray-300 mb-2">Frequenz (Hz)</h2>
+                            <input type="number" id="freqVal" value="1000" step="any" class="w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded p-2 text-xl font-mono text-emerald-600 dark:text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-gray-400">
+                                <label>Schritt (Hz):</label>
+                                <input type="number" id="freqStep" value="100" class="w-20 bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-1.5 py-0.5 text-right text-slate-900 dark:text-white">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="adjustValue('freq', -1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">-</button>
+                                <button onclick="adjustValue('freq', 1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">+</button>
+                            </div>
+                            <button onclick="sendFrequency()" class="w-full bg-slate-100 dark:bg-gray-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white dark:hover:text-white text-xs py-1.5 rounded transition-colors font-medium text-slate-700 dark:text-gray-300 cursor-pointer">Setzen</button>
+                        </div>
+                    </div>
+
+                    <!-- Amplitude Block -->
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <h2 class="text-md font-semibold text-slate-700 dark:text-gray-300 mb-2">Amplitude (Vpp)</h2>
+                            <input type="number" id="voltVal" value="1.0" step="any" class="w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded p-2 text-xl font-mono text-emerald-600 dark:text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-gray-400">
+                                <label>Schritt (V):</label>
+                                <input type="number" id="voltStep" value="0.1" step="any" class="w-20 bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-1.5 py-0.5 text-right text-slate-900 dark:text-white">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="adjustValue('volt', -1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">-</button>
+                                <button onclick="adjustValue('volt', 1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">+</button>
+                            </div>
+                            <button onclick="sendAmplitude()" class="w-full bg-slate-100 dark:bg-gray-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white dark:hover:text-white text-xs py-1.5 rounded transition-colors font-medium text-slate-700 dark:text-gray-300 cursor-pointer">Setzen</button>
+                        </div>
+                    </div>
+
+                    <!-- DC Offset Block -->
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <h2 class="text-md font-semibold text-slate-700 dark:text-gray-300 mb-2">DC Offset (V)</h2>
+                            <input type="number" id="offsetVal" value="0.0" step="any" class="w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded p-2 text-xl font-mono text-emerald-600 dark:text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-gray-400">
+                                <label>Schritt (V):</label>
+                                <input type="number" id="offsetStep" value="0.1" step="any" class="w-20 bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-1.5 py-0.5 text-right text-slate-900 dark:text-white">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="adjustValue('offset', -1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">-</button>
+                                <button onclick="adjustValue('offset', 1)" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 rounded text-lg font-bold cursor-pointer text-slate-800 dark:text-gray-100">+</button>
+                            </div>
+                            <button onclick="sendOffset()" class="w-full bg-slate-100 dark:bg-gray-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white dark:hover:text-white text-xs py-1.5 rounded transition-colors font-medium text-slate-700 dark:text-gray-300 cursor-pointer">Setzen</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Konsolen-Log für SCPI Befehle -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
+                    <div class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Gesendete SCPI Befehle</div>
+                    <div id="cmdLog" class="font-mono text-xs text-slate-600 dark:text-gray-400 max-h-24 overflow-y-auto space-y-0.5 bg-slate-100 dark:bg-gray-900 p-2 rounded border border-slate-200 dark:border-gray-700">
+                        <!-- Log-Einträge landen hier -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let port = null;
+        let writer = null;
+        let currentWaveform = 'SIN';
+
+        const STORAGE_KEYS = [
+            'baudRate', 'parity', 'dataBits', 'stopBits', 'flowControl',
+            'freqVal', 'freqStep', 'voltVal', 'voltStep', 'offsetVal', 'offsetStep'
+        ];
+        const WAVE_NAMES = { 'SIN': 'Sinus', 'SQU': 'Rechteck', 'TRI': 'Dreieck', 'RAMP': 'Rampe', 'NOIS': 'Rauschen', 'DC': 'DC' };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!("serial" in navigator)) {
+                alert("Dein Browser unterstützt die Web Serial API nicht. Bitte nutze Google Chrome, Microsoft Edge oder Opera.");
+                document.getElementById('btnConnect').disabled = true;
+                return;
+            }
+
+            // Theme aus Storage auslesen (Standard: dark)
+            const savedTheme = localStorage.getItem('hp33120a_theme') || 'dark';
+            applyTheme(savedTheme);
+
+            // Einstellungen aus localStorage laden
+            STORAGE_KEYS.forEach(key => {
+                const savedValue = localStorage.getItem('hp33120a_' + key);
+                if (savedValue !== null) {
+                    document.getElementById(key).value = savedValue;
+                }
+            });
+
+            // Letzte Signalform laden
+            const savedWave = localStorage.getItem('hp33120a_currentWaveform');
+            if (savedWave) {
+                setWaveform(savedWave, true);
+            } else {
+                setWaveform('SIN', true);
+            }
+
+            // Event-Listener für automatisches Speichern bei Parameteränderung
+            STORAGE_KEYS.forEach(key => {
+                document.getElementById(key).addEventListener('input', () => {
+                    localStorage.setItem('hp33120a_' + key, document.getElementById(key).value);
+                });
+            });
+
+            // Gespeicherte Presets im UI anzeigen
+            renderPresets();
+        });
+
+        // --- THEME LOGIK ---
+        function toggleTheme() {
+            const currentMode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            const newMode = currentMode === 'dark' ? 'light' : 'dark';
+            applyTheme(newMode);
+        }
+
+        function applyTheme(mode) {
+            const btn = document.getElementById('themeToggleBtn');
+            if (mode === 'dark') {
+                document.documentElement.classList.add('dark');
+                btn.innerHTML = '☀️ Light Mode';
+                localStorage.setItem('hp33120a_theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                btn.innerHTML = '🌙 Dark Mode';
+                localStorage.setItem('hp33120a_theme', 'light');
+            }
+        }
+
+        // --- WEB SERIAL & STEUERUNG ---
+        document.getElementById('btnConnect').addEventListener('click', async () => {
+            if (port) {
+                await disconnect();
+                return;
+            }
+
+            try {
+                port = await navigator.serial.requestPort();
+
+                const options = {
+                    baudRate: parseInt(document.getElementById('baudRate').value),
+                    dataBits: parseInt(document.getElementById('dataBits').value),
+                    stopBits: parseInt(document.getElementById('stopBits').value),
+                    parity: document.getElementById('parity').value,
+                    flowControl: document.getElementById('flowControl').value
+                };
+
+                await port.open(options);
+                writer = port.writable.getWriter();
+
+                updateStatus(true);
+                await sendCommand("SYST:REM");
+
+                // Aktuelle UI-Werte synchronisieren
+                setWaveform(currentWaveform);
+                sendFrequency();
+                sendAmplitude();
+                sendOffset();
+            } catch (error) {
+                console.error("Verbindungsfehler:", error);
+                alert("Verbindung fehlgeschlagen: " + error.message);
+                updateStatus(false);
+            }
+        });
+
+        async function disconnect() {
+            if (writer) {
+                writer.releaseLock();
+                writer = null;
+            }
+            if (port) {
+                await port.close();
+                port = null;
+            }
+            updateStatus(false);
+        }
+
+        function updateStatus(isConnected) {
+            const badge = document.getElementById('statusBadge');
+            const btn = document.getElementById('btnConnect');
+            if (isConnected) {
+                badge.textContent = "Verbunden";
+                badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30";
+                btn.textContent = "Verbindung trennen";
+                btn.className = "w-full mt-4 bg-red-600 hover:bg-red-500 text-white font-medium py-2 rounded transition-colors cursor-pointer";
+            } else {
+                badge.textContent = "Getrennt";
+                badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30";
+                btn.textContent = "Verbindung herstellen";
+                btn.className = "w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors cursor-pointer";
+            }
+        }
+
+        async function sendCommand(scpiCmd) {
+            if (!writer) {
+                logToConsole("Ignoriert (Nicht verbunden): " + scpiCmd);
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                await writer.write(encoder.encode(scpiCmd + "\n"));
+                logToConsole(scpiCmd);
+            } catch (error) {
+                console.error("Fehler beim Senden:", error);
+                logToConsole("FEHLER bei: " + scpiCmd);
+            }
+        }
+
+        function setWaveform(type, silent = false) {
+            currentWaveform = type;
+            localStorage.setItem('hp33120a_currentWaveform', type);
+
+            document.querySelectorAll('.waveform-btn').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.className = "waveform-btn bg-emerald-600/10 text-emerald-600 border-emerald-500 dark:bg-emerald-600/20 dark:text-emerald-400 p-3 rounded font-bold border dark:border-emerald-500 active:scale-95 transition-all text-center cursor-pointer shadow-sm";
+                } else {
+                    btn.className = "waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-gray-200 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer" + (btn.dataset.type === 'DC' ? ' text-orange-600 dark:text-orange-400 font-bold' : '');
+                }
+            });
+
+            if (!silent) {
+                sendCommand(`FUNC:SHAP ${type}`);
+            }
+        }
+
+        function sendFrequency() {
+            const val = document.getElementById('freqVal').value;
+            sendCommand(`FREQ ${val}`);
+        }
+
+        function sendAmplitude() {
+            const val = document.getElementById('voltVal').value;
+            sendCommand(`VOLT ${val}`);
+        }
+
+        function sendOffset() {
+            const val = document.getElementById('offsetVal').value;
+            sendCommand(`VOLT:OFFS ${val}`);
+        }
+
+        function adjustValue(type, direction) {
+            const valInput = document.getElementById(`${type}Val`);
+            const stepInput = document.getElementById(`${type}Step`);
+
+            let current = parseFloat(valInput.value) || 0;
+            let step = parseFloat(stepInput.value) || 0;
+
+            let newValue = current + (step * direction);
+
+            if ((type === 'freq' || type === 'volt') && newValue < 0) newValue = 0;
+
+            valInput.value = Number(newValue.toFixed(6));
+            localStorage.setItem('hp33120a_' + `${type}Val`, valInput.value);
+
+            if (type === 'freq') {
+                sendFrequency();
+            } else if (type === 'volt') {
+                sendAmplitude();
+            } else if (type === 'offset') {
+                sendOffset();
+            }
+        }
+
+        // --- PRESET LOGIK ---
+        function savePreset(slot) {
+            const presetData = {
+                waveform: currentWaveform,
+                freq: document.getElementById('freqVal').value,
+                volt: document.getElementById('voltVal').value,
+                offset: document.getElementById('offsetVal').value
+            };
+            localStorage.setItem(`hp33120a_preset_${slot}`, JSON.stringify(presetData));
+            renderPresets();
+            logToConsole(`Preset ${slot} erfolgreich gespeichert.`);
+        }
+
+        function applyPreset(slot) {
+            const saved = localStorage.getItem(`hp33120a_preset_${slot}`);
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+
+            document.getElementById('freqVal').value = data.freq;
+            document.getElementById('voltVal').value = data.volt;
+            document.getElementById('offsetVal').value = data.offset || "0.0";
+
+            localStorage.setItem('hp33120a_freqVal', data.freq);
+            localStorage.setItem('hp33120a_voltVal', data.volt);
+            localStorage.setItem('hp33120a_offsetVal', data.offset || "0.0");
+
+            setWaveform(data.waveform);
+            sendFrequency();
+            sendAmplitude();
+            sendOffset();
+
+            logToConsole(`Preset ${slot} aktiv.`);
+        }
+
+        function formatFreq(hzString) {
+            const hz = parseFloat(hzString);
+            if (hz >= 1000000) return (hz / 1000000).toFixed(2) + ' MHz';
+            if (hz >= 1000) return (hz / 1000).toFixed(2) + ' kHz';
+            return hz + ' Hz';
+        }
+
+        function renderPresets() {
+            for (let i = 1; i <= 5; i++) {
+                const saved = localStorage.getItem(`hp33120a_preset_${i}`);
+                const labelEl = document.getElementById(`presetLabel_${i}`);
+                const loadBtn = document.getElementById(`btnLoadPreset_${i}`);
+
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    const waveName = WAVE_NAMES[data.waveform] || data.waveform;
+                    const dcOffset = data.offset !== undefined ? `${data.offset}V DC` : '0V DC';
+                    labelEl.textContent = `${waveName} | ${formatFreq(data.freq)} | ${data.volt}Vpp | ${dcOffset}`;
+                    loadBtn.classList.remove('opacity-40');
+                } else {
+                    labelEl.textContent = "Nicht belegt";
+                    loadBtn.classList.add('opacity-40');
+                }
+            }
+        }
+
+        function logToConsole(msg) {
+            const logDiv = document.getElementById('cmdLog');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
