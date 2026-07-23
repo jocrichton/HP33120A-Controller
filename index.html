@@ -92,16 +92,47 @@
             <!-- Spalte 2 & 3: Generator Steuerung -->
             <div class="md:col-span-2 space-y-6">
                 
-                <!-- Signalform (Waveform) -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
-                    <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300 mb-3">Signalform (Waveform)</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        <button data-type="SIN" onclick="setWaveform('SIN')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Sinus</button>
-                        <button data-type="SQU" onclick="setWaveform('SQU')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rechteck</button>
-                        <button data-type="TRI" onclick="setWaveform('TRI')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Dreieck</button>
-                        <button data-type="RAMP" onclick="setWaveform('RAMP')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rampe</button>
-                        <button data-type="NOIS" onclick="setWaveform('NOIS')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer">Rauschen</button>
-                        <button data-type="DC" onclick="setWaveform('DC')" class="waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center text-orange-600 dark:text-orange-400 font-bold cursor-pointer">DC Offset Mode</button>
+                <!-- Signalform (Waveform) - Kompakte Buttons mit SVG Icons -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
+                    <h2 class="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2.5">Signalform (Waveform)</h2>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        
+                        <!-- Sinus -->
+                        <button data-type="SIN" onclick="setWaveform('SIN')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 12 C 6 4, 9 4, 12 12 C 15 20, 18 20, 21 12" stroke-linecap="round"/></svg>
+                            <span>Sinus</span>
+                        </button>
+
+                        <!-- Rechteck -->
+                        <button data-type="SQU" onclick="setWaveform('SQU')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 16 V 8 H 10 V 16 H 17 V 8 H 21" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>Rechteck</span>
+                        </button>
+
+                        <!-- Dreieck -->
+                        <button data-type="TRI" onclick="setWaveform('TRI')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 16 L 9 8 L 15 16 L 21 8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>Dreieck</span>
+                        </button>
+
+                        <!-- Rampe -->
+                        <button data-type="RAMP" onclick="setWaveform('RAMP')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 16 L 11 8 V 16 L 19 8 V 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>Rampe</span>
+                        </button>
+
+                        <!-- Rauschen -->
+                        <button data-type="NOIS" onclick="setWaveform('NOIS')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 12 L 5 8 L 7 15 L 9 6 L 11 16 L 13 7 L 15 14 L 17 9 L 19 13 L 21 11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>Rauschen</span>
+                        </button>
+
+                        <!-- DC -->
+                        <button data-type="DC" onclick="setWaveform('DC')" class="waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border border-slate-300 dark:border-gray-600 text-orange-600 dark:text-orange-400">
+                            <svg class="w-6 h-6 stroke-current fill-none mb-1" viewBox="0 0 24 24" stroke-width="2"><path d="M 3 10 H 21 M 3 15 H 7 M 10 15 H 14 M 17 15 H 21" stroke-linecap="round"/></svg>
+                            <span>DC Mode</span>
+                        </button>
+
                     </div>
                 </div>
 
@@ -111,7 +142,6 @@
                         <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Voreinstellungen (Presets)</h2>
                         <div class="flex items-center gap-2 text-xs">
                             <span class="text-slate-500 dark:text-gray-400">Anzahl:</span>
-                            <!-- Zahlenfeld für beliebige Anzahl -->
                             <input type="number" id="presetCountInput" value="5" min="1" max="99" onchange="changePresetCount(this.value)" class="w-16 text-center bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium">
                         </div>
                     </div>
@@ -222,7 +252,6 @@
             const savedTheme = localStorage.getItem('hp33120a_theme') || 'dark';
             applyTheme(savedTheme);
 
-            // Gespeicherte Preset-Anzahl laden
             const savedPresetCount = localStorage.getItem('hp33120a_presetCount');
             if (savedPresetCount) {
                 let parsed = parseInt(savedPresetCount, 10);
@@ -397,11 +426,14 @@
             currentWaveform = type;
             localStorage.setItem('hp33120a_currentWaveform', type);
 
+            const baseClass = "waveform-btn flex flex-col items-center justify-center p-2 rounded transition-all active:scale-95 cursor-pointer text-xs font-medium border";
+
             document.querySelectorAll('.waveform-btn').forEach(btn => {
                 if (btn.dataset.type === type) {
-                    btn.className = "waveform-btn bg-emerald-600/10 text-emerald-600 border-emerald-500 dark:bg-emerald-600/20 dark:text-emerald-400 p-3 rounded font-bold border dark:border-emerald-500 active:scale-95 transition-all text-center cursor-pointer shadow-sm";
+                    btn.className = `${baseClass} bg-emerald-600/10 text-emerald-600 border-emerald-500 dark:bg-emerald-600/20 dark:text-emerald-400 font-bold shadow-sm`;
                 } else {
-                    btn.className = "waveform-btn bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-gray-200 p-3 rounded font-medium border border-slate-300 dark:border-gray-600 active:scale-95 transition-all text-center cursor-pointer" + (btn.dataset.type === 'DC' ? ' text-orange-600 dark:text-orange-400 font-bold' : '');
+                    const dcExtra = btn.dataset.type === 'DC' ? ' text-orange-600 dark:text-orange-400 font-bold' : ' text-slate-700 dark:text-gray-200';
+                    btn.className = `${baseClass} bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-slate-300 dark:border-gray-600${dcExtra}`;
                 }
             });
 
@@ -452,12 +484,11 @@
         function changePresetCount(val) {
             let count = parseInt(val, 10);
             
-            // Plausibilitätsprüfung (damit das Rendern nicht eskaliert)
             if (isNaN(count) || count < 1) count = 1;
             if (count > 99) count = 99;
 
             presetCount = count;
-            document.getElementById('presetCountInput').value = presetCount; // Updatet das Feld, falls das Limit gegriffen hat
+            document.getElementById('presetCountInput').value = presetCount;
             localStorage.setItem('hp33120a_presetCount', presetCount);
             rebuildPresetUI();
         }
