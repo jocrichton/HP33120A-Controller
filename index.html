@@ -30,7 +30,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             <!-- Spalte 1: RS-232 Einstellungen -->
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 space-y-4 shadow-sm">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 space-y-4 shadow-sm h-fit">
                 <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Schnittstelle</h2>
                 
                 <div class="space-y-3 text-sm">
@@ -136,6 +136,51 @@
                     </div>
                 </div>
 
+                <!-- Software Sweep Bereich -->
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Software Frequenz-Sweep</h2>
+                        <span id="sweepStatusBadge" class="text-xs px-2.5 py-0.5 rounded font-semibold bg-slate-200 dark:bg-gray-700 text-slate-500 dark:text-gray-400">
+                            INAKTIV
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-gray-400 mb-1">Startfrequenz (Hz)</label>
+                            <input type="number" id="sweepStart" value="100" step="any" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2.5 py-1.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-gray-400 mb-1">Stoppfrequenz (Hz)</label>
+                            <input type="number" id="sweepStop" value="10000" step="any" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2.5 py-1.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-gray-400 mb-1">Schrittweite (Hz)</label>
+                            <input type="number" id="sweepStep" value="500" step="any" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2.5 py-1.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-gray-400 mb-1">Pause (ms)</label>
+                            <input type="number" id="sweepDelay" value="200" min="50" step="10" class="w-full bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2.5 py-1.5 text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="sweepLoop" class="rounded text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600">
+                            <span>Endlosschleife (Loop)</span>
+                        </label>
+
+                        <div class="flex gap-2">
+                            <button id="btnStartSweep" onclick="startSoftwareSweep()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors cursor-pointer">
+                                Sweep Starten
+                            </button>
+                            <button id="btnStopSweep" onclick="stopSoftwareSweep()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors cursor-pointer hidden">
+                                Sweep Stoppen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Voreinstellungen (Presets) -->
                 <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
                     <div class="flex justify-between items-center mb-3">
@@ -229,10 +274,12 @@
         let writer = null;
         let currentWaveform = 'SIN';
         let presetCount = 5;
+        let isSweeping = false;
 
         const STORAGE_KEYS = [
             'baudRate', 'parity', 'dataBits', 'stopBits', 'flowControl', 
-            'freqVal', 'freqStep', 'voltVal', 'voltStep', 'offsetVal', 'offsetStep'
+            'freqVal', 'freqStep', 'voltVal', 'voltStep', 'offsetVal', 'offsetStep',
+            'sweepStart', 'sweepStop', 'sweepStep', 'sweepDelay'
         ];
         const WAVE_NAMES = { 'SIN': 'Sinus', 'SQU': 'Rechteck', 'TRI': 'Dreieck', 'RAMP': 'Rampe', 'NOIS': 'Rauschen', 'DC': 'DC' };
 
@@ -268,6 +315,11 @@
                 }
             });
 
+            const savedLoop = localStorage.getItem('hp33120a_sweepLoop');
+            if (savedLoop !== null) {
+                document.getElementById('sweepLoop').checked = (savedLoop === 'true');
+            }
+
             const savedWave = localStorage.getItem('hp33120a_currentWaveform');
             if (savedWave) {
                 setWaveform(savedWave, true);
@@ -279,6 +331,10 @@
                 document.getElementById(key).addEventListener('input', () => {
                     localStorage.setItem('hp33120a_' + key, document.getElementById(key).value);
                 });
+            });
+
+            document.getElementById('sweepLoop').addEventListener('change', (e) => {
+                localStorage.setItem('hp33120a_sweepLoop', e.target.checked);
             });
 
             rebuildPresetUI();
@@ -371,6 +427,9 @@
         }
 
         async function disconnect() {
+            if (isSweeping) {
+                stopSoftwareSweep();
+            }
             if (writer) {
                 writer.releaseLock();
                 writer = null;
@@ -477,6 +536,88 @@
                 sendAmplitude();
             } else if (type === 'offset') {
                 sendOffset();
+            }
+        }
+
+        // --- SOFTWARE SWEEP LOGIK ---
+        async function startSoftwareSweep() {
+            if (isSweeping) return;
+
+            const startFreq = parseFloat(document.getElementById('sweepStart').value) || 100;
+            const stopFreq = parseFloat(document.getElementById('sweepStop').value) || 10000;
+            const stepFreq = parseFloat(document.getElementById('sweepStep').value) || 500;
+            const delayMs = parseInt(document.getElementById('sweepDelay').value, 10) || 200;
+            const loopMode = document.getElementById('sweepLoop').checked;
+
+            if (stepFreq <= 0) {
+                alert("Die Schrittweite muss größer als 0 sein.");
+                return;
+            }
+
+            isSweeping = true;
+            updateSweepUI(true);
+            logToConsole(`Software Sweep gestartet: ${startFreq}Hz bis ${stopFreq}Hz (Schritt: ${stepFreq}Hz, Pause: ${delayMs}ms)`);
+
+            const isAscending = startFreq <= stopFreq;
+
+            do {
+                let currentFreq = startFreq;
+
+                while (isSweeping) {
+                    document.getElementById('freqVal').value = Number(currentFreq.toFixed(6));
+                    localStorage.setItem('hp33120a_freqVal', currentFreq);
+                    await sendFrequency();
+
+                    if ((isAscending && currentFreq >= stopFreq) || (!isAscending && currentFreq <= stopFreq)) {
+                        break;
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                    if (!isSweeping) break;
+
+                    if (isAscending) {
+                        currentFreq += stepFreq;
+                        if (currentFreq > stopFreq) currentFreq = stopFreq;
+                    } else {
+                        currentFreq -= stepFreq;
+                        if (currentFreq < stopFreq) currentFreq = stopFreq;
+                    }
+                }
+
+                if (isSweeping && loopMode) {
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
+
+            } while (isSweeping && loopMode);
+
+            if (isSweeping) {
+                logToConsole("Software Sweep abgeschlossen.");
+            }
+            isSweeping = false;
+            updateSweepUI(false);
+        }
+
+        function stopSoftwareSweep() {
+            isSweeping = false;
+            updateSweepUI(false);
+            logToConsole("Software Sweep gestoppt.");
+        }
+
+        function updateSweepUI(running) {
+            const btnStart = document.getElementById('btnStartSweep');
+            const btnStop = document.getElementById('btnStopSweep');
+            const badge = document.getElementById('sweepStatusBadge');
+
+            if (running) {
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+                badge.textContent = "LÄUFT...";
+                badge.className = "text-xs px-2.5 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse";
+            } else {
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+                badge.textContent = "INAKTIV";
+                badge.className = "text-xs px-2.5 py-0.5 rounded font-semibold bg-slate-200 dark:bg-gray-700 text-slate-500 dark:text-gray-400";
             }
         }
 
