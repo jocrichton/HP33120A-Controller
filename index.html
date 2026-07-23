@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HP 33120A Remote Control</title>
-    <!-- Zuverlässiger Tailwind v3 CDN mit expliziter Dark Mode Konfiguration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class', // Erzwingt Steuerung rein über das Vorhandensein der Klasse 'dark'
+            darkMode: 'class',
         }
     </script>
 </head>
@@ -19,7 +18,6 @@
         <header class="flex flex-col sm:flex-row justify-between items-center border-b border-slate-200 dark:border-gray-700 pb-4 gap-4">
             <h1 class="text-2xl font-bold tracking-wide text-emerald-600 dark:text-emerald-400">HP 33120A Controller</h1>
             <div class="flex items-center gap-3">
-                <!-- Theme Umschalter -->
                 <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                     ☀️ Light Mode
                 </button>
@@ -30,11 +28,11 @@
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+            
             <!-- Spalte 1: RS-232 Einstellungen -->
             <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 space-y-4 shadow-sm">
                 <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Schnittstelle</h2>
-
+                
                 <div class="space-y-3 text-sm">
                     <div>
                         <label class="block text-slate-500 dark:text-gray-400 mb-1">Baudrate</label>
@@ -81,14 +79,20 @@
                     </div>
                 </div>
 
-                <button id="btnConnect" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors shadow-lg shadow-emerald-900/10 dark:shadow-emerald-900/20 cursor-pointer">
-                    Verbindung herstellen
-                </button>
+                <div class="pt-2">
+                    <button id="btnConnect" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors shadow-lg shadow-emerald-900/10 dark:shadow-emerald-900/20 cursor-pointer">
+                        Verbindung herstellen
+                    </button>
+                    <!-- Button zum Ändern des Ports (versteckt, bis ein Port gemerkt wurde) -->
+                    <button id="btnChangePort" class="w-full mt-2 text-xs text-slate-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors cursor-pointer hidden font-medium">
+                        Anderen Port wählen
+                    </button>
+                </div>
             </div>
 
             <!-- Spalte 2 & 3: Generator Steuerung -->
             <div class="md:col-span-2 space-y-6">
-
+                
                 <!-- Signalform (Waveform) -->
                 <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm">
                     <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300 mb-3">Signalform (Waveform)</h2>
@@ -126,7 +130,7 @@
 
                 <!-- Frequenz, Amplitude & DC Offset -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
+                    
                     <!-- Frequenz Block -->
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 flex flex-col justify-between shadow-sm">
                         <div>
@@ -204,7 +208,7 @@
         let currentWaveform = 'SIN';
 
         const STORAGE_KEYS = [
-            'baudRate', 'parity', 'dataBits', 'stopBits', 'flowControl',
+            'baudRate', 'parity', 'dataBits', 'stopBits', 'flowControl', 
             'freqVal', 'freqStep', 'voltVal', 'voltStep', 'offsetVal', 'offsetStep'
         ];
         const WAVE_NAMES = { 'SIN': 'Sinus', 'SQU': 'Rechteck', 'TRI': 'Dreieck', 'RAMP': 'Rampe', 'NOIS': 'Rauschen', 'DC': 'DC' };
@@ -216,11 +220,16 @@
                 return;
             }
 
-            // Theme aus Storage auslesen (Standard: dark)
+            // Initiale UI Prüfung: Haben wir uns schon einen Port gemerkt?
+            navigator.serial.getPorts().then(ports => {
+                if (ports.length > 0) {
+                    document.getElementById('btnChangePort').classList.remove('hidden');
+                }
+            });
+
             const savedTheme = localStorage.getItem('hp33120a_theme') || 'dark';
             applyTheme(savedTheme);
 
-            // Einstellungen aus localStorage laden
             STORAGE_KEYS.forEach(key => {
                 const savedValue = localStorage.getItem('hp33120a_' + key);
                 if (savedValue !== null) {
@@ -228,7 +237,6 @@
                 }
             });
 
-            // Letzte Signalform laden
             const savedWave = localStorage.getItem('hp33120a_currentWaveform');
             if (savedWave) {
                 setWaveform(savedWave, true);
@@ -236,14 +244,12 @@
                 setWaveform('SIN', true);
             }
 
-            // Event-Listener für automatisches Speichern bei Parameteränderung
             STORAGE_KEYS.forEach(key => {
                 document.getElementById(key).addEventListener('input', () => {
                     localStorage.setItem('hp33120a_' + key, document.getElementById(key).value);
                 });
             });
 
-            // Gespeicherte Presets im UI anzeigen
             renderPresets();
         });
 
@@ -268,15 +274,23 @@
         }
 
         // --- WEB SERIAL & STEUERUNG ---
+
+        // Haupt-Button: Nutzt bekannten Port oder fragt nach einem neuen
         document.getElementById('btnConnect').addEventListener('click', async () => {
             if (port) {
                 await disconnect();
                 return;
             }
+            await connectSerial(false);
+        });
 
+        // Sekundär-Button: Erzwingt das Browser-Popup zur Neuauswahl
+        document.getElementById('btnChangePort').addEventListener('click', async () => {
+            await connectSerial(true);
+        });
+
+        async function connectSerial(forcePrompt) {
             try {
-                port = await navigator.serial.requestPort();
-
                 const options = {
                     baudRate: parseInt(document.getElementById('baudRate').value),
                     dataBits: parseInt(document.getElementById('dataBits').value),
@@ -285,23 +299,56 @@
                     flowControl: document.getElementById('flowControl').value
                 };
 
-                await port.open(options);
-                writer = port.writable.getWriter();
+                // Wenn forcePrompt true ist (User klickt "Anderen Port wählen")
+                if (forcePrompt) {
+                    port = await navigator.serial.requestPort();
+                } else {
+                    // Ansonsten prüfen, ob es schon autorisierte Ports gibt
+                    const ports = await navigator.serial.getPorts();
+                    if (ports.length > 0) {
+                        port = ports[0]; // Wir nehmen den zuletzt genutzten
+                    } else {
+                        // Noch keiner bekannt, also Prompt öffnen
+                        port = await navigator.serial.requestPort();
+                    }
+                }
 
+                // Versuche den Port zu öffnen
+                try {
+                    await port.open(options);
+                } catch (openErr) {
+                    // Falls das Öffnen fehlschlägt (z.B. weil der gemerkte Port ausgesteckt wurde)
+                    if (!forcePrompt && openErr.name !== 'NotFoundError') {
+                        console.warn("Gemerkter Port konnte nicht geöffnet werden, frage nach neuem...", openErr);
+                        port = await navigator.serial.requestPort();
+                        await port.open(options);
+                    } else {
+                        throw openErr; // Fehler weiterwerfen, wenn der Nutzer im Popup abbricht
+                    }
+                }
+
+                writer = port.writable.getWriter();
+                
                 updateStatus(true);
                 await sendCommand("SYST:REM");
-
+                
                 // Aktuelle UI-Werte synchronisieren
                 setWaveform(currentWaveform);
                 sendFrequency();
                 sendAmplitude();
                 sendOffset();
+                
             } catch (error) {
                 console.error("Verbindungsfehler:", error);
-                alert("Verbindung fehlgeschlagen: " + error.message);
+                // "NotFoundError" tritt auf, wenn der Nutzer im Browser-Popup auf "Abbrechen" klickt.
+                // In diesem Fall wollen wir keine störende Fehlermeldung anzeigen.
+                if (error.name !== 'NotFoundError') { 
+                    alert("Verbindung fehlgeschlagen: " + error.message);
+                }
+                port = null;
                 updateStatus(false);
             }
-        });
+        }
 
         async function disconnect() {
             if (writer) {
@@ -318,16 +365,26 @@
         function updateStatus(isConnected) {
             const badge = document.getElementById('statusBadge');
             const btn = document.getElementById('btnConnect');
+            const changeBtn = document.getElementById('btnChangePort');
+
             if (isConnected) {
                 badge.textContent = "Verbunden";
                 badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30";
                 btn.textContent = "Verbindung trennen";
-                btn.className = "w-full mt-4 bg-red-600 hover:bg-red-500 text-white font-medium py-2 rounded transition-colors cursor-pointer";
+                btn.className = "w-full bg-red-600 hover:bg-red-500 text-white font-medium py-2 rounded transition-colors cursor-pointer";
+                changeBtn.classList.add('hidden'); // Wenn verbunden, brauche ich den Button nicht
             } else {
                 badge.textContent = "Getrennt";
                 badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30";
                 btn.textContent = "Verbindung herstellen";
-                btn.className = "w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors cursor-pointer";
+                btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded transition-colors shadow-lg shadow-emerald-900/10 dark:shadow-emerald-900/20 cursor-pointer";
+                
+                // Nach dem Trennen prüfen, ob wir den "Port ändern" Button zeigen sollen
+                navigator.serial.getPorts().then(ports => {
+                    if (ports.length > 0) {
+                        changeBtn.classList.remove('hidden');
+                    }
+                });
             }
         }
 
@@ -381,17 +438,17 @@
         function adjustValue(type, direction) {
             const valInput = document.getElementById(`${type}Val`);
             const stepInput = document.getElementById(`${type}Step`);
-
+            
             let current = parseFloat(valInput.value) || 0;
             let step = parseFloat(stepInput.value) || 0;
-
+            
             let newValue = current + (step * direction);
-
-            if ((type === 'freq' || type === 'volt') && newValue < 0) newValue = 0;
-
+            
+            if ((type === 'freq' || type === 'volt') && newValue < 0) newValue = 0; 
+            
             valInput.value = Number(newValue.toFixed(6));
             localStorage.setItem('hp33120a_' + `${type}Val`, valInput.value);
-
+            
             if (type === 'freq') {
                 sendFrequency();
             } else if (type === 'volt') {
@@ -417,13 +474,13 @@
         function applyPreset(slot) {
             const saved = localStorage.getItem(`hp33120a_preset_${slot}`);
             if (!saved) return;
-
+            
             const data = JSON.parse(saved);
-
+            
             document.getElementById('freqVal').value = data.freq;
             document.getElementById('voltVal').value = data.volt;
             document.getElementById('offsetVal').value = data.offset || "0.0";
-
+            
             localStorage.setItem('hp33120a_freqVal', data.freq);
             localStorage.setItem('hp33120a_voltVal', data.volt);
             localStorage.setItem('hp33120a_offsetVal', data.offset || "0.0");
@@ -432,7 +489,7 @@
             sendFrequency();
             sendAmplitude();
             sendOffset();
-
+            
             logToConsole(`Preset ${slot} aktiv.`);
         }
 
@@ -448,7 +505,7 @@
                 const saved = localStorage.getItem(`hp33120a_preset_${i}`);
                 const labelEl = document.getElementById(`presetLabel_${i}`);
                 const loadBtn = document.getElementById(`btnLoadPreset_${i}`);
-
+                
                 if (saved) {
                     const data = JSON.parse(saved);
                     const waveName = WAVE_NAMES[data.waveform] || data.waveform;
