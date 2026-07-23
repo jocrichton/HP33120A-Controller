@@ -111,16 +111,11 @@
                         <h2 class="text-lg font-semibold text-slate-700 dark:text-gray-300">Voreinstellungen (Presets)</h2>
                         <div class="flex items-center gap-2 text-xs">
                             <span class="text-slate-500 dark:text-gray-400">Anzahl:</span>
-                            <select id="presetCountSelect" onchange="changePresetCount(this.value)" class="bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium">
-                                <option value="3">3</option>
-                                <option value="5" selected>5</option>
-                                <option value="8">8</option>
-                                <option value="10">10</option>
-                                <option value="15">15</option>
-                            </select>
+                            <!-- Zahlenfeld für beliebige Anzahl -->
+                            <input type="number" id="presetCountInput" value="5" min="1" max="99" onchange="changePresetCount(this.value)" class="w-16 text-center bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded px-2 py-1 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium">
                         </div>
                     </div>
-                    <div id="presetContainer" class="space-y-2">
+                    <div id="presetContainer" class="space-y-2 max-h-96 overflow-y-auto pr-1">
                         <!-- Wird dynamisch befüllt -->
                     </div>
                 </div>
@@ -230,9 +225,12 @@
             // Gespeicherte Preset-Anzahl laden
             const savedPresetCount = localStorage.getItem('hp33120a_presetCount');
             if (savedPresetCount) {
-                presetCount = parseInt(savedPresetCount, 10);
-                document.getElementById('presetCountSelect').value = presetCount;
+                let parsed = parseInt(savedPresetCount, 10);
+                if (!isNaN(parsed) && parsed > 0) {
+                    presetCount = parsed;
+                }
             }
+            document.getElementById('presetCountInput').value = presetCount;
 
             STORAGE_KEYS.forEach(key => {
                 const savedValue = localStorage.getItem('hp33120a_' + key);
@@ -452,7 +450,14 @@
 
         // --- PRESET LOGIK ---
         function changePresetCount(val) {
-            presetCount = parseInt(val, 10);
+            let count = parseInt(val, 10);
+            
+            // Plausibilitätsprüfung (damit das Rendern nicht eskaliert)
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 99) count = 99;
+
+            presetCount = count;
+            document.getElementById('presetCountInput').value = presetCount; // Updatet das Feld, falls das Limit gegriffen hat
             localStorage.setItem('hp33120a_presetCount', presetCount);
             rebuildPresetUI();
         }
